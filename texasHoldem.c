@@ -30,11 +30,6 @@ void initalizeDeck(Card deck[]) {
     }
 }
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <string.h>
-
 void betAction(float *collegeFund) {
     int action;
     printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
@@ -71,7 +66,21 @@ void betAction(float *collegeFund) {
 }
 
 int main() {
+    float collegeFund;
+    int action;
 
+    printf ("Welcome to the poker game!\n");
+    printf ("How much of your son's college fund do you want to bring in?\n");
+    printf ("$");
+    scanf ("%f", &collegeFund);
+    printf ("You have brought in $%.2f of your son's college fund.\n", collegeFund);
+
+    //flop here
+
+    printf ("The flop is: 10 of hearts, 7 of clubs, and 2 of diamonds.\n"); //Will be replaced by random stuff later
+    betAction(&collegeFund);
+    
+    //After finishing bet, if bot has best possible hand on board, say "I have the nuts!"
 
     return 0;
 }
