@@ -30,6 +30,46 @@ void initalizeDeck(Card deck[]) {
     }
 }
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+void betAction(float *collegeFund) {
+    int action;
+    printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
+    scanf ("%d", &action);
+
+    switch (action) {
+        case 1:
+            printf ("How much would you like to bet?\n");
+            float betAmount;
+            scanf ("%f", &betAmount);
+            if (betAmount > *collegeFund) {
+                printf ("You don't have enough money to bet that amount. Please try again you horrible father.\n");
+            } else {
+                *collegeFund -= betAmount;
+                printf ("You bet $%.2f. Your remaining college fund is $%.2f.\n", betAmount, *collegeFund);
+            }
+
+            //Bot action here, raise call or fold
+
+            break;
+        case 2:
+            printf ("You folded. Better luck next time!\n");
+            break;
+        case 3:
+            printf ("You checked. Maybe the bot will bet? Let's find out!\n");
+
+            //Bot action here (raise or check)
+            //Bot notes: make sure to shit talk on 7 2 or nuts
+
+            break;
+        default:
+            printf ("Invalid action. Please try again.\n");
+    }
+}
+
 int main() {
 
 
