@@ -43,6 +43,7 @@ const char *handRankNames[] = {
 
 const char *rankStrength[] = {"","","2","3","4","5","6","7","8","9","10","J","Q","K","A"};
 const char *suitNames[] = {"Hearts", "Diamonds", "Clubs", "Spades"};
+int deckLength = 52;
 
 void initalizeDeck(Card deck[]) {
     int index = 0;
@@ -63,6 +64,11 @@ void deckshuffle(Card deck[]) {
         deck[i] = deck[j];
         deck[j] = temp;
     }
+}
+
+Card drawCard(Card deck[]) {
+    deckLength -= 1;
+    return deck[deckLength];
 }
 
 int compareCards(const void *a, const void *b) {
@@ -192,18 +198,15 @@ void betAction(float collegeFund) {
 }
 
 int main() {
-
     int z;
     Card deck[52];
     initalizeDeck(deck);
     deckshuffle(deck);
-
-    /*
+    printf("here is post shuffled deck, without draw card\n");
     for (z = 0; z < 52; z++) {
         printf ("%s of %s\n", rankStrength[deck[z].rank], suitNames[deck[z].suit]);
     }
-    */
-    
+
     float collegeFund;
     int action;
 
