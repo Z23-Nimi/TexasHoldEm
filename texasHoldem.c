@@ -197,11 +197,13 @@ int main() {
     Card deck[52];
     initalizeDeck(deck);
     deckshuffle(deck);
-    printf("here is post shuffled deck, without draw card\n");
+
+    /*
     for (z = 0; z < 52; z++) {
         printf ("%s of %s\n", rankStrength[deck[z].rank], suitNames[deck[z].suit]);
     }
-
+    */
+    
     float collegeFund;
     int action;
 
