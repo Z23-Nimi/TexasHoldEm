@@ -42,6 +42,7 @@ const char *handRankNames[] = {
 };
 
 const char *rankStrength[] = {"","","2","3","4","5","6","7","8","9","10","J","Q","K","A"};
+const char *suitNames[] = {"Hearts", "Diamonds", "Clubs", "Spades"};
 
 void initalizeDeck(Card deck[]) {
     int index = 0;
@@ -51,6 +52,16 @@ void initalizeDeck(Card deck[]) {
             deck[index].suit = suit;
             index++;
         }
+    }
+}
+
+void deckshuffle(Card deck[]) {
+    srand(time(NULL));
+    for (int i = 52 - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        Card temp = deck[i];
+        deck[i] = deck[j];
+        deck[j] = temp;
     }
 }
 
@@ -181,6 +192,16 @@ void betAction(float collegeFund) {
 }
 
 int main() {
+
+    int z;
+    Card deck[52];
+    initalizeDeck(deck);
+    deckshuffle(deck);
+    printf("here is post shuffled deck, without draw card\n");
+    for (z = 0; z < 52; z++) {
+        printf ("%s of %s\n", rankStrength[deck[z].rank], suitNames[deck[z].suit]);
+    }
+
     float collegeFund;
     int action;
 
@@ -197,5 +218,4 @@ int main() {
     
     //After finishing bet, if bot has best possible hand on board, say "I have the nuts!"
 
-    return 0;
 }
