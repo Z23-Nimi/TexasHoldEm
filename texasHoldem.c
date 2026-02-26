@@ -44,8 +44,13 @@ const char *handRankNames[] = {
 const char *rankStrength[] = {"","","2","3","4","5","6","7","8","9","10","J","Q","K","A"};
 const char *suitNames[] = {"Hearts", "Diamonds", "Clubs", "Spades"};
 int deckLength = 52;
+int burnIndex = 0;
+float collegeFund = 0;
+Card deck[52];
+Card table[5];
+Card burnPile[52];
 
-void initalizeDeck(Card deck[]) {
+void initalizeDeck() {
     int index = 0;
     for (int suit = 0; suit < 4; suit++) {
         for (int rank = 2; rank < 15; rank++) {
@@ -56,7 +61,7 @@ void initalizeDeck(Card deck[]) {
     }
 }
 
-void deckshuffle(Card deck[]) {
+void deckshuffle() {
     srand(time(NULL));
     for (int i = 52 - 1; i > 0; i--) {
         int j = rand() % (i + 1);
@@ -66,7 +71,7 @@ void deckshuffle(Card deck[]) {
     }
 }
 
-Card drawCard(Card deck[]) {
+Card drawCard() {
     deckLength -= 1;
     return deck[deckLength];
 }
@@ -162,7 +167,7 @@ handRank evaluateBestHand(Card cards[], int totalCards) {
     return best;
 }
 
-void betAction(float collegeFund) {
+void betAction() {
     int action;
     printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
     scanf ("%d", &action);
@@ -197,29 +202,48 @@ void betAction(float collegeFund) {
     }
 }
 
-int main() {
-    int z;
-    Card deck[52];
-    initalizeDeck(deck);
-    deckshuffle(deck);
-    printf("here is post shuffled deck, without draw card\n");
-    for (z = 0; z < 52; z++) {
-        printf ("%s of %s\n", rankStrength[deck[z].rank], suitNames[deck[z].suit]);
+void flop() {
+    for (int i = 0; i < 3; i++) {
+        table[i] = drawCard();
     }
+}
 
-    float collegeFund;
-    int action;
+void river() {
+    for (int i = 3; i < 5; i++) {
+        table[i] = drawCard();
+    }
+}
 
+void burnCard() {
+    burnPile[burnIndex] = drawCard();
+    burnIndex++;
+}
+
+void logicFlow() {
+    initalizeDeck();
+    deckshuffle();
     printf ("Welcome to the poker game!\n");
     printf ("How much of your son's college fund do you want to bring in?\n");
     printf ("$");
     scanf ("%f", &collegeFund);
     printf ("You have brought in $%.2f of your son's college fund.\n", collegeFund);
+    betAction();
+    flop();
+    betAction();
+    river();
+    betAction();
+    //Resolve the game
 
-    //flop here
+}
 
-    printf ("The flop is: 10 of hearts, 7 of clubs, and 2 of diamonds.\n"); //Will be replaced by random stuff later
-    betAction(collegeFund);
+int main() {
+    int z;
+    initalizeDeck();
+    deckshuffle();
+    printf("here is post shuffled deck, without draw card\n");
+    for (z = 0; z < 52; z++) {
+        printf ("%s of %s\n", rankStrength[deck[z].rank], suitNames[deck[z].suit]);
+    }
     
     //After finishing bet, if bot has best possible hand on board, say "I have the nuts!"
 
