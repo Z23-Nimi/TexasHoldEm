@@ -1,3 +1,4 @@
+
 /*
 Sean Keenan
 William De Anda
@@ -9,6 +10,8 @@ Simulate a game of Texas Hold'Em against the computer, includes betting
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <unistd.h>
+#include <signal.h>
 
 typedef struct {
     int rank;
@@ -46,6 +49,8 @@ const char *suitNames[] = {"Hearts", "Diamonds", "Clubs", "Spades"};
 int deckLength = 52;
 int burnIndex = 0;
 float collegeFund = 0;
+float betSum = 0;
+
 Card deck[52];
 Card table[5];
 Card burnPile[52];
@@ -181,7 +186,10 @@ void betAction() {
                 printf ("You don't have enough money to bet that amount. Please try again you horrible father.\n");
             } else {
                 collegeFund -= betAmount;
+                betSum += betAmount;
                 printf ("You bet $%.2f. Your remaining college fund is $%.2f.\n", betAmount, collegeFund);
+                printf ("Your total bet is now $%.2f.\n", betSum);
+                break;
             }
 
             //Bot action here, raise call or fold
@@ -200,6 +208,15 @@ void betAction() {
         default:
             printf ("Invalid action. Please try again.\n");
     }
+    //Use alarm to let the bot call clock on a random amount of time after 3 minutes
+}
+
+void botAction() {
+    printf ("\033[1mThe bot is thinking...\n\033[0m\n");
+    //Add random flavor text for how bot looks
+    //Randomize sleep timer
+    sleep(2);
+    printf ("The bot has made a move.\n");
 }
 
 void flop() {
@@ -228,23 +245,17 @@ void logicFlow() {
     scanf ("%f", &collegeFund);
     printf ("You have brought in $%.2f of your son's college fund.\n", collegeFund);
     betAction();
+    botAction();
     flop();
     betAction();
+    botAction();
     river();
-    betAction();
+    betAction(); 
+    botAction();
     //Resolve the game
 
 }
 
 int main() {
-    int z;
-    initalizeDeck();
-    deckshuffle();
-    printf("here is post shuffled deck, without draw card\n");
-    for (z = 0; z < 52; z++) {
-        printf ("%s of %s\n", rankStrength[deck[z].rank], suitNames[deck[z].suit]);
-    }
-    
-    //After finishing bet, if bot has best possible hand on board, say "I have the nuts!"
-
+    return 0;
 }
