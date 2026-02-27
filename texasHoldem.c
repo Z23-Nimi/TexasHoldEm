@@ -50,6 +50,7 @@ int deckLength = 52;
 int burnIndex = 0;
 float collegeFund = 0;
 float betSum = 0;
+int randoAction = 0;
 
 Card deck[52];
 Card table[5];
@@ -73,6 +74,12 @@ void deckshuffle() {
         Card temp = deck[i];
         deck[i] = deck[j];
         deck[j] = temp;
+    }
+}
+
+void randoBot() {
+    for (int i = 0; i < 1; i++) {
+        randoAction = rand() % 3 + 1;
     }
 }
 
@@ -213,9 +220,12 @@ void betAction() {
 
 void botAction() {
     printf ("\033[1mThe bot is thinking...\n\033[0m\n");
+    
     //Add random flavor text for how bot looks
     //Randomize sleep timer
-    sleep(2);
+    randoBot();
+    sleep(randoAction);
+    randoBot();
     printf ("The bot has made a move.\n");
 }
 
