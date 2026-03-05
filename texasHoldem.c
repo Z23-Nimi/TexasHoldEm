@@ -541,9 +541,13 @@ void logicFlow() {
 }
 
 int main() {
-    logicFlow();
+    int choice;
+    while (1) {
+        logicFlow();
+        printf("Would you like to:\n1. Play Again\n2. End");
+        scanf("%d", &choice);
+    }
     return 0;
 }
 
-//Showdown
 // When folding (currently exit command), need to reset program with new college fund. (maybe add finction that specifically says "add funds?" to make it feel more continuouss)
