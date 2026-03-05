@@ -546,8 +546,10 @@ int main() {
         logicFlow();
         printf("Would you like to:\n1. Play Again\n2. End");
         scanf("%d", &choice);
+        if (choice == 2) {
+            return 0;
+        }
     }
-    return 0;
 }
 
 // When folding (currently exit command), need to reset program with new college fund. (maybe add finction that specifically says "add funds?" to make it feel more continuouss)
