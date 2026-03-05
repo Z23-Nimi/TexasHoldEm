@@ -51,6 +51,9 @@ int burnIndex = 0;
 float collegeFund = 0;
 float betSum = 0;
 int randoAction = 0;
+int action = 0;
+float betAmount = 0;
+int alarm_count = 0;
 
 Card deck[52];
 Card table[5];
@@ -77,9 +80,9 @@ void deckshuffle() {
     }
 }
 
-void randoBot() {
+void randoBot(int x) {
     for (int i = 0; i < 1; i++) {
-        randoAction = rand() % 3 + 1;
+        randoAction = rand() % x + 1;
     }
 }
 
@@ -179,16 +182,39 @@ handRank evaluateBestHand(Card cards[], int totalCards) {
     return best;
 }
 
+void handle_alarm(int sig) {
+    if (sig == SIGALRM) {
+        printf("\nTime's up! The bot has called the clock on you.\n");
+        printf("A reasonable amount of time has passed, you have 3 minutes or your hand will be considered dead.\n");
+        if (alarm_count >= 1) {
+            printf("Your hand has been declared dead due to inactivity. Better luck next time!\n");
+            betSum = 0;
+            exit(0);
+        }
+
+        alarm (180);
+        alarm_count++;
+    }
+}
+
 void betAction() {
-    int action;
+
+    int first_timer = 0;
     printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
     scanf ("%d", &action);
+
+    for (int i = 0; i < 1; i++) {
+        first_timer = rand() % 119 + 61;
+    }
+
+    alarm (first_timer); 
 
     switch (action) {
         case 1:
             printf ("How much would you like to bet?\n");
             float betAmount;
             scanf ("%f", &betAmount);
+
             if (betAmount > collegeFund) {
                 printf ("You don't have enough money to bet that amount. Please try again you horrible father.\n");
             } else {
@@ -199,34 +225,92 @@ void betAction() {
                 break;
             }
 
-            //Bot action here, raise call or fold
-
-            break;
         case 2:
             printf ("You folded. Better luck next time!\n");
-            break;
+            exit(0);
         case 3:
             printf ("You checked. Maybe the bot will bet? Let's find out!\n");
-
-            //Bot action here (raise or check)
-            //Bot notes: make sure to shit talk on 7 2 or nuts
-
             break;
         default:
             printf ("Invalid action. Please try again.\n");
     }
     //Use alarm to let the bot call clock on a random amount of time after 3 minutes
+    random();
 }
 
 void botAction() {
     printf ("\033[1mThe bot is thinking...\n\033[0m\n");
-    
-    //Add random flavor text for how bot looks
-    //Randomize sleep timer
-    randoBot();
+    randoBot(3);
     sleep(randoAction);
-    randoBot();
-    printf ("The bot has made a move.\n");
+    randoBot(10);
+    if (action == 1 || action == 3) {
+        switch (randoAction) {
+        case 1:
+            printf("The bot is sweating profusely");
+            break;
+        case 2:
+            printf("The bot is fidgeting with its hands");
+            break;
+        case 3:
+            printf("The bot is staring intently at the table");
+            break;
+        case 4:
+            printf("The bot looking at your cards");
+            break;
+        case 5:
+            printf("The bot is calculating your defeat");
+            break;
+        case 6:
+            printf("The bot is muttering to itself");
+            break;
+        case 7:
+            printf("The bot is trying to read your tells");
+            break;
+        case 8:
+            printf ("The bot is trying to look under the deck");
+        case 9:
+            printf ("The bot is trying to hack into the casino's security system");
+            break;
+        case 10:
+            printf ("The bot is making a house of cards");
+        }
+        
+        botActionDos();
+        printf ("\nThe bot has made a move.\n");
+    }
+    else {
+        printf ("The bot gloats in your defeat");
+    }
+}
+
+void botActionDos() {
+    //hand strenght high enough, bet or raise
+    if (botHandStrength >= x) {
+        if (action == 1) {
+        raise;
+        }
+        else if (action == 3) {
+            randoBot(7);
+            betAmount = (collegeFund / randoAction);
+            printf("The bot bets $%.2f.\n", betAmount);
+            betSum += betAmount;
+        }
+    }
+    else if (botHandStrength <= x && betAmount >= (collegeFund / 3)) {
+        if (action == 1) {
+        printf("R.I.P.");
+        printf("The bot folds.");
+        collegeFund += betSum;
+        }
+        else if (action == 3) {
+        printf("The bot checks.");
+        }
+    }
+    else {
+        printf("The bot calls your bet of $%.2f.\n", betAmount);
+        betSum += betAmount;
+    }
+
 }
 
 void flop() {
@@ -246,26 +330,41 @@ void burnCard() {
     burnIndex++;
 }
 
-void logicFlow() {
-    initalizeDeck();
-    deckshuffle();
+void startingFunds(){
     printf ("Welcome to the poker game!\n");
     printf ("How much of your son's college fund do you want to bring in?\n");
     printf ("$");
     scanf ("%f", &collegeFund);
     printf ("You have brought in $%.2f of your son's college fund.\n", collegeFund);
+}
+
+void logicFlow() {
+    initalizeDeck();
+    deckshuffle();
+    startingFunds();
     betAction();
     botAction();
     flop();
     betAction();
     botAction();
+    turn();
+    betAction();
+    botAction();
     river();
     betAction(); 
     botAction();
-    //Resolve the game
+    //Showdown
+    betSum = 0;
 
 }
 
 int main() {
+    logicFlow();
     return 0;
 }
+
+//Need to identify bot hand and strength
+//Need to identify player hand and strength
+//Bot cannot do things until hand strenght has been identified
+//Showdown
+// When folding (currently exit command), need to reset program with new college fund. (maybe add finction that specifically says "add funds?" to make it feel more continuouss)
