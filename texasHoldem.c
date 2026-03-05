@@ -414,6 +414,12 @@ void dealHoleCards() {
         rankStrength[playerHand[1].rank], suitNames[playerHand[1].suit]);
 }
 
+void printHoleCards(Card hand[2]) {
+    printf("%s of %s, %s of %s",
+        rankStrength[hand[0].rank], suitNames[hand[0].suit],
+        rankStrength[hand[1].rank], suitNames[hand[1].suit]);
+}
+
 void flop() {
     for (int i = 0; i < 3; i++) {
         table[i] = drawCard();
@@ -431,6 +437,53 @@ void river() {
 void burnCard() {
     burnPile[burnIndex] = drawCard();
     burnIndex++;
+}
+
+void showdown() {
+
+    printf("\n===== SHOWDOWN =====\n");
+
+    printf("Your hand: ");
+    printHoleCards(playerHand);
+    printf("\n");
+
+    printf("Bot hand: ");
+    printHoleCards(botHand);
+    printf("\n\n");
+
+    Card playerCards[7] = {
+        playerHand[0], playerHand[1],
+        table[0], table[1], table[2],
+        table[3], table[4]
+    };
+
+    Card botCards[7] = {
+        botHand[0], botHand[1],
+        table[0], table[1], table[2],
+        table[3], table[4]
+    };
+
+    handRank playerBest = evaluateBestHand(playerCards, 7);
+    handRank botBest = evaluateBestHand(botCards, 7);
+
+    printf("Your best hand: %s\n", handRankNames[playerBest]);
+    printf("Bot best hand: %s\n\n", handRankNames[botBest]);
+
+    if (playerBest > botBest) {
+        printf("You win the pot of $%.2f!\n", betSum);
+        collegeFund += betSum;
+    }
+
+    else if (botBest > playerBest) {
+        printf("The bot wins the pot of $%.2f.\n", betSum);
+    }
+
+    else {
+        printf("It's a tie! The pot is split.\n");
+        collegeFund += betSum / 2;
+    }
+
+    printf("Your remaining college fund: $%.2f\n", collegeFund);
 }
 
 void startingFunds(){
@@ -481,6 +534,8 @@ void logicFlow() {
     betAction();
     botAction();
     betAmount = 0;
+
+    showdown();
 
     betSum = 0;
 }
