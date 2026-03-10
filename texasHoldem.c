@@ -552,4 +552,4 @@ int main() {
     }
 }
 
-// When folding (currently exit command), need to reset program with new college fund. (maybe add finction that specifically says "add funds?" to make it feel more continuouss)
+// Kickers, handRanking, GUI (FML)
