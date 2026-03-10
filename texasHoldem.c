@@ -277,8 +277,8 @@ int betAction() {
                 betSum += betAmount;
                 printf ("You bet $%.2f. Your remaining college fund is $%.2f.\n", betAmount, collegeFund);
                 printf ("Your total bet is now $%.2f.\n", betSum);
-                break;
             }
+            break;
 
         case 2:
             printf ("You folded. Better luck next time!\n");
@@ -295,6 +295,8 @@ int betAction() {
 }
 
 void botAction() {
+    float strong = 0.70;
+    float weak = 0.35;
     printf ("\033[1mThe bot is thinking...\n\033[0m\n");
     randoBot(3);
     sleep(randoAction);
@@ -332,20 +334,7 @@ void botAction() {
             printf ("The bot is making a house of cards.\n");
         }
         
-        botActionDos();
-        printf ("\nThe bot has made a move.\n");
-    }
-    else {
-        printf ("The bot gloats in your defeat.\n");
-    }
-}
-
-void botActionDos() {
-
-    float strong = 0.70;
-    float weak = 0.35;
-
-    if (botHandStrength >= strong) {
+        if (botHandStrength >= strong) {
 
         if (action == 1) {
             printf("The bot raises your bet!\n");
@@ -380,6 +369,11 @@ void botActionDos() {
         } else {
             printf("The bot checks.\n");
         }
+    }
+        printf ("\nThe bot has made a move.\n");
+    }
+    else {
+        printf ("The bot gloats in your defeat.\n");
     }
 }
 
@@ -550,7 +544,7 @@ int main() {
     int choice;
     while (1) {
         logicFlow();
-        printf("Would you like to:\n1. Play Again\n2. Cash Out\n");
+        printf("Would you like to:\n1. Play Again\n2. End\n");
         scanf("%d", &choice);
         if (choice == 2) {
             return 0;
