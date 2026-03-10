@@ -550,7 +550,7 @@ int main() {
     int choice;
     while (1) {
         logicFlow();
-        printf("Would you like to:\n1. Play Again\n2. End\n");
+        printf("Would you like to:\n1. Play Again\n2. Cash Out\n");
         scanf("%d", &choice);
         if (choice == 2) {
             return 0;
