@@ -253,7 +253,7 @@ void handle_alarm(int sig) {
     }
 }
 
-void betAction() {
+int betAction() {
 
     int first_timer = 0;
     printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
@@ -282,7 +282,7 @@ void betAction() {
 
         case 2:
             printf ("You folded. Better luck next time!\n");
-            exit(0);
+            return 1;
         case 3:
             printf ("You checked. Maybe the bot will bet? Let's find out!\n");
             break;
@@ -291,6 +291,7 @@ void betAction() {
     }
     //Use alarm to let the bot call clock on a random amount of time after 3 minutes
     random();
+    return 0;
 }
 
 void botAction() {
@@ -504,7 +505,10 @@ void logicFlow() {
     dealHoleCards();
 
     updateBotHandStrength(0);
-    betAction();
+    int n = betAction();
+    if (n == 1) {
+        return;
+    }
     botAction();
     betAmount = 0;
 
@@ -513,7 +517,10 @@ void logicFlow() {
     printTable(3);
     updateBotHandStrength(3);
 
-    betAction();
+    n = betAction();
+    if (n == 1) {
+        return;
+    }
     botAction();
     betAmount = 0;
 
@@ -522,7 +529,10 @@ void logicFlow() {
     printTable(4);
     updateBotHandStrength(4);
 
-    betAction();
+    n = betAction();
+    if (n == 1) {
+        return;
+    }
     botAction();
     betAmount = 0;
 
@@ -530,10 +540,6 @@ void logicFlow() {
     river();
     printTable(5);
     updateBotHandStrength(5);
-
-    betAction();
-    botAction();
-    betAmount = 0;
 
     showdown();
 
@@ -544,7 +550,7 @@ int main() {
     int choice;
     while (1) {
         logicFlow();
-        printf("Would you like to:\n1. Play Again\n2. End");
+        printf("Would you like to:\n1. Play Again\n2. End\n");
         scanf("%d", &choice);
         if (choice == 2) {
             return 0;
@@ -552,4 +558,4 @@ int main() {
     }
 }
 
-// Kickers, handRanking, GUI (FML)
+// Kickers, comparative handRanking, GUI
