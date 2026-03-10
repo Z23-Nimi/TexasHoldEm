@@ -552,4 +552,4 @@ int main() {
     }
 }
 
-// Kickers, comparative handRanking, GUI
+// Kickers, comparative handRanking, GUI, re raise on bot
