@@ -159,7 +159,6 @@ handRank evaluate5CardHand(Card hand[5]) {
 
 handRank evaluateBestHand(Card cards[], int totalCards) {
     handRank best = High_Card;
-
     for (int i = 0; i < totalCards - 4; i++) {
         for (int j = i+1; j < totalCards - 3; j++) {
             for (int k = j+1; k < totalCards - 2; k++) {
@@ -186,7 +185,6 @@ handRank evaluateBestHand(Card cards[], int totalCards) {
 }
 
 float evaluateHandStrength(Card hole[2], Card board[], int boardCount, int simulations) {
-
     int wins = 0;
     int ties = 0;
     int losses = 0;
@@ -254,7 +252,6 @@ void handle_alarm(int sig) {
 }
 
 int betAction() {
-
     int first_timer = 0;
     printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
     scanf ("%d", &action);
@@ -378,13 +375,17 @@ void botAction() {
 }
 
 void updateBotHandStrength(int boardCount) {
-
     botHandStrength = evaluateHandStrength(botHand, table, boardCount, 1000);
 
     printf("[DEBUG] Bot hand strength: %.2f\n", botHandStrength);
 }
 
-void printTable(int boardCount) {
+void printCards(int boardCount) {
+    printf("\nYour Cards:\n");
+
+    for (int i = 0; i < 2; i++) {
+        printf("%s of %s\n", rankStrength[playerHand[i].rank], suitNames[playerHand[i].suit]);
+    }
 
     printf("\nCommunity Cards:\n");
 
@@ -508,7 +509,7 @@ void logicFlow() {
 
     burnCard();
     flop();
-    printTable(3);
+    printCards(3);
     updateBotHandStrength(3);
 
     n = betAction();
@@ -520,7 +521,7 @@ void logicFlow() {
 
     burnCard();
     turn();
-    printTable(4);
+    printCards(4);
     updateBotHandStrength(4);
 
     n = betAction();
@@ -532,7 +533,7 @@ void logicFlow() {
 
     burnCard();
     river();
-    printTable(5);
+    printCards(5);
     updateBotHandStrength(5);
 
     showdown();
@@ -552,4 +553,4 @@ int main() {
     }
 }
 
-// Kickers, comparative handRanking, GUI, re raise on bot
+// Kickers, comparative handRanking, GUI
