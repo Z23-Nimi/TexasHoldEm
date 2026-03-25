@@ -1,4 +1,3 @@
-
 /*
 Sean Keenan
 William De Anda
@@ -37,6 +36,7 @@ void reRaisePlayer();
 void playerResponse();
 
 void initalizeDeck() {
+    deckLength = 52;
     int index = 0;
     for (int suit = 0; suit < 4; suit++) {
         for (int rank = 2; rank < 15; rank++) {
