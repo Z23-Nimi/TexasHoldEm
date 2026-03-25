@@ -291,7 +291,6 @@ HandValue evaluateBestHand(Card cards[], int totalCards) {
         }
     }
     return best;
-}urn best;
 }
 
 float evaluateHandStrength(Card hole[2], Card board[], int boardCount, int simulations) {
