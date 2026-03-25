@@ -44,6 +44,11 @@ const char *handRankNames[] = {
     "Royal Flush"
 };
 
+typedef struct {
+    handRank rank;
+    int values[5];
+} HandValue;
+
 const char *rankStrength[] = {"","","2","3","4","5","6","7","8","9","10","J","Q","K","A"};
 const char *suitNames[] = {"Hearts", "Diamonds", "Clubs", "Spades"};
 int deckLength = 52;
@@ -105,64 +110,164 @@ int compareCards(const void *a, const void *b) {
     return c1->rank - c2->rank;
 }
 
-handRank evaluate5CardHand(Card hand[5]) {
+int compareHandValue(HandValue a, HandValue b) {
+    if (a.rank != b.rank)
+        return a.rank - b.rank;
+
+    for (int i = 0; i < 5; i++) {
+        if (a.values[i] != b.values[i])
+            return a.values[i] - b.values[i];
+    }
+
+    return 0;
+}
+
+HandValue evaluate5CardHand(Card hand[5]) {
+    HandValue hv;
+    memset(hv.values, 0, sizeof(hv.values));
+
     int rankCount[15] = {0};
     int suitCount[4] = {0};
-    
+
     for (int i = 0; i < 5; i++) {
         rankCount[hand[i].rank]++;
         suitCount[hand[i].suit]++;
     }
 
-    int pairs = 0, three = 0, four = 0;
-    int flush = 0, straight = 0, royal = 0;
+    int pairs[2] = {0};
+    int pairCount = 0;
+    int three = 0, four = 0;
 
-    // Check multiples
-    for (int i = 2; i <= 14; i++) {
-        if (rankCount[i] == 4) four++;
-        if (rankCount[i] == 3) three++;
-        if (rankCount[i] == 2) pairs++;
+    // Count multiples
+    for (int i = 14; i >= 2; i--) {
+        if (rankCount[i] == 4) four = i;
+        else if (rankCount[i] == 3) three = i;
+        else if (rankCount[i] == 2) pairs[pairCount++] = i;
     }
 
     // Check flush
+    int flush = 0;
     for (int i = 0; i < 4; i++) {
         if (suitCount[i] == 5) flush = 1;
     }
 
     // Check straight
-    for (int i = 2; i <= 10; i++) {
-        if (rankCount[i] &&
-            rankCount[i+1] &&
-            rankCount[i+2] &&
-            rankCount[i+3] &&
-            rankCount[i+4]) {
+    int straight = 0;
+    int highStraight = 0;
+
+    for (int i = 14; i >= 5; i--) {
+        if (rankCount[i] && rankCount[i-1] && rankCount[i-2] &&
+            rankCount[i-3] && rankCount[i-4]) {
             straight = 1;
-            if (i == 10) {
-                royal = 1;
-            }
+            highStraight = i;
+            break;
         }
     }
 
-    // Special case: A-2-3-4-5
-    if (rankCount[14] && rankCount[2] && rankCount[3] &&
+    // Wheel: A-2-3-4-5
+    if (!straight && rankCount[14] && rankCount[2] && rankCount[3] &&
         rankCount[4] && rankCount[5]) {
         straight = 1;
+        highStraight = 5;
     }
 
-    if (straight && flush && royal) return Royal_Flush;
-    if (straight && flush) return Straight_Flush;
-    if (four) return Four_Of_Kind;
-    if (three && pairs) return Full_House;
-    if (flush) return Flush;
-    if (straight) return Straight;
-    if (three) return Three_Of_Kind;
-    if (pairs == 2) return Two_Pair;
-    if (pairs == 1) return One_Pair;
-    return High_Card;
+    // Sort descending for kickers
+    int sorted[5], idx = 0;
+    for (int i = 14; i >= 2; i--) {
+        for (int j = 0; j < rankCount[i]; j++) {
+            sorted[idx++] = i;
+        }
+    }
+
+    // ===== HAND RANKING =====
+
+    if (straight && flush) {
+        if (highStraight == 14) {
+            hv.rank = Royal_Flush;
+        } else {
+            hv.rank = Straight_Flush;
+            hv.values[0] = highStraight;
+        }
+    }
+    else if (four) {
+        hv.rank = Four_Of_Kind;
+        hv.values[0] = four;
+
+        for (int i = 0; i < 5; i++) {
+            if (sorted[i] != four) {
+                hv.values[1] = sorted[i];
+                break;
+            }
+        }
+    }
+    else if (three && pairCount >= 1) {
+        hv.rank = Full_House;
+        hv.values[0] = three;
+        hv.values[1] = pairs[0];
+    }
+    else if (flush) {
+        hv.rank = Flush;
+        for (int i = 0; i < 5; i++) {
+            hv.values[i] = sorted[i];
+        }
+    }
+    else if (straight) {
+        hv.rank = Straight;
+        hv.values[0] = highStraight;
+    }
+    else if (three) {
+        hv.rank = Three_Of_Kind;
+        hv.values[0] = three;
+
+        int k = 1;
+        for (int i = 0; i < 5; i++) {
+            if (sorted[i] != three) {
+                hv.values[k++] = sorted[i];
+            }
+        }
+    }
+    else if (pairCount == 2) {
+        hv.rank = Two_Pair;
+
+        int highPair = pairs[0];
+        int lowPair = pairs[1];
+
+        hv.values[0] = highPair;
+        hv.values[1] = lowPair;
+
+        for (int i = 0; i < 5; i++) {
+            if (sorted[i] != highPair && sorted[i] != lowPair) {
+                hv.values[2] = sorted[i];
+                break;
+            }
+        }
+    }
+    else if (pairCount == 1) {
+        hv.rank = One_Pair;
+        hv.values[0] = pairs[0];
+
+        int k = 1;
+        for (int i = 0; i < 5; i++) {
+            if (sorted[i] != pairs[0]) {
+                hv.values[k++] = sorted[i];
+            }
+        }
+    }
+    else {
+        hv.rank = High_Card;
+        for (int i = 0; i < 5; i++) {
+            hv.values[i] = sorted[i];
+        }
+    }
+
+    return hv;
 }
 
-handRank evaluateBestHand(Card cards[], int totalCards) {
-    handRank best = High_Card;
+HandValue evaluateBestHand(Card cards[], int totalCards) {
+    HandValue best;
+    best.rank = High_Card;
+    memset(best.values, 0, sizeof(best.values));
+
     for (int i = 0; i < totalCards - 4; i++) {
         for (int j = i+1; j < totalCards - 3; j++) {
             for (int k = j+1; k < totalCards - 2; k++) {
@@ -176,9 +281,9 @@ handRank evaluateBestHand(Card cards[], int totalCards) {
 
                         qsort(hand, 5, sizeof(Card), compareCards);
 
-                        handRank current = evaluate5CardHand(hand);
+                        HandValue current = evaluate5CardHand(hand);
 
-                        if (current > best)
+                        if (compareHandValue(current, best) > 0)
                             best = current;
                     }
                 }
@@ -186,6 +291,7 @@ handRank evaluateBestHand(Card cards[], int totalCards) {
         }
     }
     return best;
+}urn best;
 }
 
 float evaluateHandStrength(Card hole[2], Card board[], int boardCount, int simulations) {
@@ -229,11 +335,11 @@ float evaluateHandStrength(Card hole[2], Card board[], int boardCount, int simul
             fullBoard[3], fullBoard[4]
         };
 
-        handRank playerBest = evaluateBestHand(playerCards, 7);
-        handRank oppBest = evaluateBestHand(oppCards, 7);
+        HandValue playerBest = evaluateBestHand(playerCards, 7);
+        HandValue oppBest = evaluateBestHand(oppCards, 7);
 
-        if (playerBest > oppBest) wins++;
-        else if (playerBest < oppBest) losses++;
+        if (playerBest.rank > oppBest.rank) wins++;
+        else if (playerBest.rank < oppBest.rank) losses++;
         else ties++;
     }
 
@@ -459,8 +565,6 @@ void botAction() {
 
 void updateBotHandStrength(int boardCount) {
     botHandStrength = evaluateHandStrength(botHand, table, boardCount, 1000);
-
-    printf("[DEBUG] Bot hand strength: %.2f\n", botHandStrength);
 }
 
 void printCards(int boardCount) {
@@ -542,21 +646,21 @@ void showdown() {
         table[3], table[4]
     };
 
-    handRank playerBest = evaluateBestHand(playerCards, 7);
-    handRank botBest = evaluateBestHand(botCards, 7);
+    HandValue playerBest = evaluateBestHand(playerCards, 7);
+    HandValue botBest = evaluateBestHand(botCards, 7);
 
-    printf("Your best hand: %s\n", handRankNames[playerBest]);
-    printf("Bot best hand: %s\n\n", handRankNames[botBest]);
+    printf("Your best hand: %s\n", handRankNames[playerBest.rank]);
+    printf("Bot best hand: %s\n\n", handRankNames[botBest.rank]);
 
-    if (playerBest > botBest) {
+    int result = compareHandValue(playerBest, botBest);
+
+    if (result > 0) {
         printf("You win the pot of $%.2f!\n", betSum);
         collegeFund += betSum;
     }
-
-    else if (botBest > playerBest) {
+    else if (result < 0) {
         printf("The bot wins the pot of $%.2f.\n", betSum);
     }
-
     else {
         printf("It's a tie! The pot is split.\n");
         collegeFund += betSum / 2;
