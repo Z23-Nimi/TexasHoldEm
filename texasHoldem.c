@@ -62,6 +62,10 @@ Card burnPile[52];
 Card playerHand[2];
 Card botHand[2];
 
+void reRaiseBot();
+void reRaisePlayer();
+void playerResponse();
+
 void initalizeDeck() {
     int index = 0;
     for (int suit = 0; suit < 4; suit++) {
@@ -291,6 +295,82 @@ int betAction() {
     return 0;
 }
 
+void reRaiseBot() {
+
+    printf ("\033[1mThe bot is thinking...\n\033[0m\n");
+    float strong = 0.80;
+    if (botHandStrength >= strong) {
+
+        printf("The bot raises your bet!\n");
+
+        if (betAmount *1.3 > collegeFund) {
+            betAmount = collegeFund;
+        } 
+        else {
+        betAmount *= 1.3;
+        betSum += betAmount;
+        }
+
+        printf ("The bot raises by $%.2f. Your total bet is now $%.2f.\n", betAmount, betSum);
+        playerResponse();
+    }
+
+    else {
+        printf("The bot calls your bet of $%.2f.\n", betAmount);
+        betSum += betAmount;
+    }
+}
+
+void playerResponse() {
+    printf("Would you like to call, fold, or raise? (1) Call, (2) Fold, (3) Raise\n");
+    scanf("%d", &action);
+    switch (action){
+    case 1:
+        printf("You call.\n");
+        betSum += betAmount;
+        collegeFund -= betAmount;
+        break;
+    case 2:
+        printf("You fold.\n");
+        betSum = 0;
+        break;
+    case 3:
+        reRaisePlayer();
+        break;
+    default:
+        printf("Invalid action. Please try again.\n");
+        break;
+    }
+
+}
+
+void reRaisePlayer() {
+    printf("You raise.\n");
+    betSum += betAmount;
+    collegeFund -= betAmount;
+    while (1) {
+        printf("How much would you like to raise?\n");
+        scanf("%f", &betAmount);
+
+        if (betAmount > collegeFund) {
+            printf ("You don't have enough money to bet that amount. Please try again you horrible father.\n");
+        } 
+        else {
+            collegeFund -= betAmount;
+            betSum += betAmount;
+            break;
+        }
+    }
+
+    printf("You raise by $%.2f. Your total bet is now $%.2f. Your remaining college fund is $%.2f.\n", betAmount, betSum, collegeFund);
+
+    if (collegeFund == 0) {
+        printf ("\033[1m Damn you must hate your kid.\n\033[0m\n");
+    }
+
+    reRaiseBot();
+}
+
 void botAction() {
     float strong = 0.70;
     float weak = 0.35;
@@ -333,40 +413,43 @@ void botAction() {
         
         if (botHandStrength >= strong) {
 
-        if (action == 1) {
-            printf("The bot raises your bet!\n");
-            betAmount *= 1.5;
-            betSum += betAmount;
+            if (action == 1) {
+                printf("The bot raises your bet!\n");
+                betAmount *= 1.5;
+                betSum += betAmount;
+            }
+
+            else if (action == 3) {
+                randoBot(7);
+                betAmount = (collegeFund / randoAction);
+                printf("The bot bets $%.2f.\n", betAmount);
+                betSum += betAmount;
+            }
+
+            playerResponse();
+            
         }
 
-        else if (action == 3) {
-            randoBot(7);
-            betAmount = (collegeFund / randoAction);
-            printf("The bot bets $%.2f.\n", betAmount);
-            betSum += betAmount;
-        }
-    }
+        else if (botHandStrength <= weak && betAmount >= (collegeFund / 3)) {
 
-    else if (botHandStrength <= weak && betAmount >= (collegeFund / 3)) {
+            if (action == 1) {
+                printf("The bot folds.\n");
+                collegeFund += betSum;
+            }
 
-        if (action == 1) {
-            printf("The bot folds.\n");
-            collegeFund += betSum;
+            else if (action == 3) {
+                printf("The bot checks.\n");
+            }
         }
 
-        else if (action == 3) {
-            printf("The bot checks.\n");
+        else {
+            if (betAmount > 0) {
+                printf("The bot calls your bet of $%.2f.\n", betAmount);
+                betSum += betAmount;
+            } else {
+                printf("The bot checks.\n");
+            }
         }
-    }
-
-    else {
-        if (betAmount > 0) {
-            printf("The bot calls your bet of $%.2f.\n", betAmount);
-            betSum += betAmount;
-        } else {
-            printf("The bot checks.\n");
-        }
-    }
         printf ("\nThe bot has made a move.\n");
     }
     else {
@@ -495,8 +578,6 @@ void logicFlow() {
     initalizeDeck();
     deckshuffle();
 
-    startingFunds();
-
     dealHoleCards();
 
     updateBotHandStrength(0);
@@ -542,6 +623,7 @@ void logicFlow() {
 }
 
 int main() {
+    startingFunds();
     int choice;
     while (1) {
         logicFlow();
@@ -553,4 +635,4 @@ int main() {
     }
 }
 
-// Kickers, comparative handRanking, GUI
+// Kickers, re raising
