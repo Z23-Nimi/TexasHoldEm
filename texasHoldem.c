@@ -12,42 +12,7 @@ Simulate a game of Texas Hold'Em against the computer, includes betting
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-
-typedef struct {
-    int rank;
-    int suit;
-} Card;
-
-typedef enum {
-    High_Card,
-    One_Pair,
-    Two_Pair,
-    Three_Of_Kind,
-    Straight,
-    Flush,
-    Full_House,
-    Four_Of_Kind,
-    Straight_Flush,
-    Royal_Flush
-} handRank;
-
-const char *handRankNames[] = {
-    "High Card",
-    "One Pair",
-    "Two Pair",
-    "Three of a Kind",
-    "Straight",
-    "Flush",
-    "Full House",
-    "Four of a Kind",
-    "Straight Flush",
-    "Royal Flush"
-};
-
-typedef struct {
-    handRank rank;
-    int values[5];
-} HandValue;
+#include "texasHoldem.h"
 
 const char *rankStrength[] = {"","","2","3","4","5","6","7","8","9","10","J","Q","K","A"};
 const char *suitNames[] = {"Hearts", "Diamonds", "Clubs", "Spades"};
@@ -477,7 +442,7 @@ void reRaisePlayer() {
 }
 
 void botAction() {
-    float strong = 0.70;
+    float strong = 0.6;
     float weak = 0.35;
     printf ("\033[1mThe bot is thinking...\n\033[0m\n");
     randoBot(3);
@@ -535,7 +500,7 @@ void botAction() {
             
         }
 
-        else if (botHandStrength <= weak && betAmount >= (collegeFund / 3)) {
+        else if (botHandStrength <= weak) {
 
             if (action == 1) {
                 printf("The bot folds.\n");
@@ -564,6 +529,8 @@ void botAction() {
 
 void updateBotHandStrength(int boardCount) {
     botHandStrength = evaluateHandStrength(botHand, table, boardCount, 1000);
+
+    printf("DEBUG: %f\n", botHandStrength);
 }
 
 void printCards(int boardCount) {
