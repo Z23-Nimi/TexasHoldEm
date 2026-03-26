@@ -9,8 +9,6 @@ Simulate a game of Texas Hold'Em against the computer, includes betting
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include <unistd.h>
-#include <signal.h>
 #include "texasHoldem.h"
 
 const char *rankStrength[] = {"","","2","3","4","5","6","7","8","9","10","J","Q","K","A"};
@@ -22,9 +20,7 @@ float betSum = 0;
 int randoAction = 0;
 int action = 0;
 float betAmount = 0;
-int alarm_count = 0;
 float botHandStrength = 0.0;
-int first_timer = 0;
 
 Card deck[52];
 Card table[5];
@@ -34,8 +30,10 @@ Card botHand[2];
 
 void reRaiseBot();
 void reRaisePlayer();
-void playerResponse();
+int playerResponse();
 
+
+//This creates a deck that is unshuffled with 52 cards
 void initalizeDeck() {
     deckLength = 52;
     int index = 0;
@@ -48,6 +46,7 @@ void initalizeDeck() {
     }
 }
 
+//Shuffles the deck
 void deckshuffle() {
     srand(time(NULL));
     for (int i = 52 - 1; i > 0; i--) {
@@ -58,17 +57,20 @@ void deckshuffle() {
     }
 }
 
+//Randomizes the bots actions when called
 void randoBot(int x) {
     for (int i = 0; i < 1; i++) {
         randoAction = rand() % x + 1;
     }
 }
 
+//Draw a card from the deck
 Card drawCard() {
     deckLength -= 1;
     return deck[deckLength];
 }
 
+//Compare two cards for sorting
 int compareCards(const void *a, const void *b) {
     const Card *c1 = (const Card *)a;
     const Card *c2 = (const Card *)b;
@@ -76,6 +78,7 @@ int compareCards(const void *a, const void *b) {
     return c1->rank - c2->rank;
 }
 
+//Compares hand value to account for kickers
 int compareHandValue(HandValue a, HandValue b) {
     if (a.rank != b.rank)
         return a.rank - b.rank;
@@ -88,6 +91,7 @@ int compareHandValue(HandValue a, HandValue b) {
     return 0;
 }
 
+//Evaluates the hand given to check for hand combinations
 HandValue evaluate5CardHand(Card hand[5]) {
     HandValue hv;
     memset(hv.values, 0, sizeof(hv.values));
@@ -229,6 +233,7 @@ HandValue evaluate5CardHand(Card hand[5]) {
     return hv;
 }
 
+//Evaluates the best 5 card hand from the hand and board
 HandValue evaluateBestHand(Card cards[], int totalCards) {
     HandValue best;
     best.rank = High_Card;
@@ -259,6 +264,7 @@ HandValue evaluateBestHand(Card cards[], int totalCards) {
     return best;
 }
 
+//This function uses the Monte Carlo method to determine the bot's win rate with it current hand
 float evaluateHandStrength(Card hole[2], Card board[], int boardCount, int simulations) {
     int wins = 0;
     int ties = 0;
@@ -311,28 +317,8 @@ float evaluateHandStrength(Card hole[2], Card board[], int boardCount, int simul
     return (wins + ties * 0.5) / simulations;
 }
 
-void handle_alarm(int sig) {
-    if (sig == SIGALRM) {
-        printf("\nTime's up! The bot has called the clock on you.\n");
-        printf("A reasonable amount of time has passed, you have 3 minutes or your hand will be considered dead.\n");
-        if (alarm_count >= 1) {
-            printf("Your hand has been declared dead due to inactivity. Better luck next time!\n");
-            betSum = 0;
-            exit(0);
-        }
-
-        alarm (180);
-        alarm_count++;
-    }
-}
-
+//Player's betting action, includes error handling
 int betAction() {
-
-    for (int i = 0; i < 1; i++) {
-        first_timer = rand() % 119 + 61;
-    }
-
-    alarm (first_timer); 
 
     printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
     scanf ("%d", &action);
@@ -362,12 +348,12 @@ int betAction() {
         default:
             printf ("Invalid action. Please try again.\n");
     }
-    //Use alarm to let the bot call clock on a random amount of time after 1 minute
-    alarm_count = 0;
+
     random();
     return 0;
 }
 
+//Determines if the bot should raise, call or fold after a player raises a bot bet
 void reRaiseBot() {
 
     printf ("\033[1mThe bot is thinking...\n\033[0m\n");
@@ -394,8 +380,8 @@ void reRaiseBot() {
     }
 }
 
-void playerResponse() {
-    alarm(first_timer);
+//If the bot raises, this function determines what the player does
+int playerResponse() {
 
     printf("Would you like to call, fold, or raise? (1) Call, (2) Fold, (3) Raise\n");
     scanf("%d", &action);
@@ -405,13 +391,11 @@ void playerResponse() {
         printf("You call.\n");
         betSum += betAmount;
         collegeFund -= betAmount;
-        alarm_count = 0;
         break;
     case 2:
         printf("You fold.\n");
         betSum = 0;
-        alarm_count = 0;
-        break;
+        return 1;
     case 3:
         reRaisePlayer();
         break;
@@ -420,8 +404,10 @@ void playerResponse() {
         break;
     }
 
+    return 0;
 }
 
+//If the payer raises again, this determines how much
 void reRaisePlayer() {
     printf("You raise.\n");
     betSum += betAmount;
@@ -446,12 +432,12 @@ void reRaisePlayer() {
         printf ("\033[1m Damn you must hate your kid.\n\033[0m\n");
     }
 
-    alarm_count = 0;
     reRaiseBot();
 }
 
+//Determines the bots action after the player acts
 void botAction() {
-    float strong = 0.6;
+    float strong = 0.65;
     float weak = 0.35;
     printf ("\033[1mThe bot is thinking...\n\033[0m\n");
     randoBot(3);
@@ -509,7 +495,7 @@ void botAction() {
             
         }
 
-        else if (botHandStrength <= weak) {
+        else if (botHandStrength <= weak && betSum >= collegeFund * 0.15) {
 
             if (action == 1) {
                 printf("The bot folds.\n");
@@ -536,12 +522,14 @@ void botAction() {
     }
 }
 
+//Updates the bot's hand strength after each round of betting
 void updateBotHandStrength(int boardCount) {
     botHandStrength = evaluateHandStrength(botHand, table, boardCount, 1000);
 
     printf("DEBUG: %f\n", botHandStrength);
 }
 
+//Tells the user what their cards are and what the community cards are after each round of betting
 void printCards(int boardCount) {
     printf("\nYour Cards:\n");
 
@@ -560,11 +548,11 @@ void printCards(int boardCount) {
     printf("\n");
 }
 
+//Deals the hole cards to the player and bot and prints the player's hand
 void dealHoleCards() {
     playerHand[0] = drawCard();
-    playerHand[1] = drawCard();
-
     botHand[0] = drawCard();
+    playerHand[1] = drawCard();
     botHand[1] = drawCard();
 
     printf("Your cards: %s of %s, %s of %s\n",
@@ -572,31 +560,37 @@ void dealHoleCards() {
         rankStrength[playerHand[1].rank], suitNames[playerHand[1].suit]);
 }
 
+//Prints the player's hole cards
 void printHoleCards(Card hand[2]) {
     printf("%s of %s, %s of %s",
         rankStrength[hand[0].rank], suitNames[hand[0].suit],
         rankStrength[hand[1].rank], suitNames[hand[1].suit]);
 }
 
+//Sets the first 3 community cards on the table
 void flop() {
     for (int i = 0; i < 3; i++) {
         table[i] = drawCard();
     }
 }
 
+//Sets the 4th community card on the table
 void turn() {
     table[3] = drawCard();
 }
 
+//Sets the 5th community card on the table
 void river() {
     table[4] = drawCard();
 }
 
+//Burns a card with a flame thrower
 void burnCard() {
     burnPile[burnIndex] = drawCard();
     burnIndex++;
 }
 
+//After all betting, compare hand strength and ruin dreams
 void showdown() {
 
     printf("\n===== SHOWDOWN =====\n");
@@ -644,6 +638,7 @@ void showdown() {
     printf("Your remaining college fund: $%.2f\n", collegeFund);
 }
 
+//Determines how much money a player brings in
 void startingFunds(){
     printf ("Welcome to the poker game!\n");
     printf ("How much of your son's college fund do you want to bring in?\n");
@@ -652,6 +647,7 @@ void startingFunds(){
     printf ("You have brought in $%.2f of your son's college fund.\n", collegeFund);
 }
 
+//Hey we need this to run.Bbasically main at this point
 void logicFlow() {
 
     initalizeDeck();
@@ -702,7 +698,6 @@ void logicFlow() {
 }
 
 int main() {
-    signal(SIGALRM, handle_alarm);
     startingFunds();
     int choice;
     while (1) {
