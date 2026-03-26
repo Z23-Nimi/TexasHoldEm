@@ -24,6 +24,7 @@ int action = 0;
 float betAmount = 0;
 int alarm_count = 0;
 float botHandStrength = 0.0;
+int first_timer = 0;
 
 Card deck[52];
 Card table[5];
@@ -326,15 +327,15 @@ void handle_alarm(int sig) {
 }
 
 int betAction() {
-    int first_timer = 0;
-    printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
-    scanf ("%d", &action);
 
     for (int i = 0; i < 1; i++) {
         first_timer = rand() % 119 + 61;
     }
 
     alarm (first_timer); 
+
+    printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
+    scanf ("%d", &action);
 
     switch (action) {
         case 1:
@@ -353,6 +354,7 @@ int betAction() {
 
         case 2:
             printf ("You folded. Better luck next time!\n");
+            betSum = 0;
             return 1;
         case 3:
             printf ("You checked. Maybe the bot will bet? Let's find out!\n");
@@ -360,7 +362,8 @@ int betAction() {
         default:
             printf ("Invalid action. Please try again.\n");
     }
-    //Use alarm to let the bot call clock on a random amount of time after 3 minutes
+    //Use alarm to let the bot call clock on a random amount of time after 1 minute
+    alarm_count = 0;
     random();
     return 0;
 }
@@ -392,17 +395,22 @@ void reRaiseBot() {
 }
 
 void playerResponse() {
+    alarm(first_timer);
+
     printf("Would you like to call, fold, or raise? (1) Call, (2) Fold, (3) Raise\n");
     scanf("%d", &action);
+
     switch (action){
     case 1:
         printf("You call.\n");
         betSum += betAmount;
         collegeFund -= betAmount;
+        alarm_count = 0;
         break;
     case 2:
         printf("You fold.\n");
         betSum = 0;
+        alarm_count = 0;
         break;
     case 3:
         reRaisePlayer();
@@ -438,6 +446,7 @@ void reRaisePlayer() {
         printf ("\033[1m Damn you must hate your kid.\n\033[0m\n");
     }
 
+    alarm_count = 0;
     reRaiseBot();
 }
 
@@ -693,6 +702,7 @@ void logicFlow() {
 }
 
 int main() {
+    signal(SIGALRM, handle_alarm);
     startingFunds();
     int choice;
     while (1) {
@@ -704,5 +714,3 @@ int main() {
         }
     }
 }
-
-// Kickers, re raising
