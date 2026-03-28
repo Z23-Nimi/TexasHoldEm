@@ -1,2 +1,2 @@
-gcc texasHoldem.c handEvaluation.c -o gamba
+gcc texasHoldem.c handEvaluation.c -o gamba  
 ./gamba
