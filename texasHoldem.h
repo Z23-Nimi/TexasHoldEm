@@ -1,3 +1,6 @@
+#ifndef TEXAS_HOLDEM_H
+#define TEXAS_HOLDEM_H
+
 #include <stdlib.h>
 
 typedef struct {
@@ -18,20 +21,20 @@ typedef enum {
     Royal_Flush
 } handRank;
 
-const char *handRankNames[] = {
-    "High Card",
-    "One Pair",
-    "Two Pair",
-    "Three of a Kind",
-    "Straight",
-    "Flush",
-    "Full House",
-    "Four of a Kind",
-    "Straight Flush",
-    "Royal Flush"
-};
+extern const char *handRankNames[];
 
 typedef struct {
     handRank rank;
     int values[5];
 } HandValue;
+
+extern Card deck[52];
+extern int deckLength;
+
+int compareCards(const void *a, const void *b);
+int compareHandValue(HandValue a, HandValue b);
+HandValue evaluate5CardHand(Card hand[5]);
+HandValue evaluateBestHand(Card cards[], int totalCards);
+float evaluateHandStrength(Card hole[2], Card board[], int boardCount, int simulations);
+
+#endif
