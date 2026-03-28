@@ -28,12 +28,23 @@ Card burnPile[52];
 Card playerHand[2];
 Card botHand[2];
 
+const char *handRankNames[] = {
+    "High Card",
+    "One Pair",
+    "Two Pair",
+    "Three of a Kind",
+    "Straight",
+    "Flush",
+    "Full House",
+    "Four of a Kind",
+    "Straight Flush",
+    "Royal Flush"
+};
+
 void reRaiseBot();
 void reRaisePlayer();
-int playerResponse();
+void playerResponse();
 
-
-//This creates a deck that is unshuffled with 52 cards
 void initalizeDeck() {
     deckLength = 52;
     int index = 0;
@@ -46,7 +57,6 @@ void initalizeDeck() {
     }
 }
 
-//Shuffles the deck
 void deckshuffle() {
     srand(time(NULL));
     for (int i = 52 - 1; i > 0; i--) {
@@ -57,271 +67,25 @@ void deckshuffle() {
     }
 }
 
-//Randomizes the bots actions when called
 void randoBot(int x) {
     for (int i = 0; i < 1; i++) {
         randoAction = rand() % x + 1;
     }
 }
 
-//Draw a card from the deck
 Card drawCard() {
     deckLength -= 1;
     return deck[deckLength];
 }
 
-//Compare two cards for sorting
-int compareCards(const void *a, const void *b) {
-    const Card *c1 = (const Card *)a;
-    const Card *c2 = (const Card *)b;
-
-    return c1->rank - c2->rank;
-}
-
-//Compares hand value to account for kickers
-int compareHandValue(HandValue a, HandValue b) {
-    if (a.rank != b.rank)
-        return a.rank - b.rank;
-
-    for (int i = 0; i < 5; i++) {
-        if (a.values[i] != b.values[i])
-            return a.values[i] - b.values[i];
-    }
-
-    return 0;
-}
-
-//Evaluates the hand given to check for hand combinations
-HandValue evaluate5CardHand(Card hand[5]) {
-    HandValue hv;
-    memset(hv.values, 0, sizeof(hv.values));
-
-    int rankCount[15] = {0};
-    int suitCount[4] = {0};
-
-    for (int i = 0; i < 5; i++) {
-        rankCount[hand[i].rank]++;
-        suitCount[hand[i].suit]++;
-    }
-
-    int pairs[2] = {0};
-    int pairCount = 0;
-    int three = 0, four = 0;
-
-    // Count multiples
-    for (int i = 14; i >= 2; i--) {
-        if (rankCount[i] == 4) four = i;
-        else if (rankCount[i] == 3) three = i;
-        else if (rankCount[i] == 2) pairs[pairCount++] = i;
-    }
-
-    // Check flush
-    int flush = 0;
-    for (int i = 0; i < 4; i++) {
-        if (suitCount[i] == 5) flush = 1;
-    }
-
-    // Check straight
-    int straight = 0;
-    int highStraight = 0;
-
-    for (int i = 14; i >= 5; i--) {
-        if (rankCount[i] && rankCount[i-1] && rankCount[i-2] &&
-            rankCount[i-3] && rankCount[i-4]) {
-            straight = 1;
-            highStraight = i;
-            break;
-        }
-    }
-
-    // Wheel: A-2-3-4-5
-    if (!straight && rankCount[14] && rankCount[2] && rankCount[3] &&
-        rankCount[4] && rankCount[5]) {
-        straight = 1;
-        highStraight = 5;
-    }
-
-    // Sort descending for kickers
-    int sorted[5], idx = 0;
-    for (int i = 14; i >= 2; i--) {
-        for (int j = 0; j < rankCount[i]; j++) {
-            sorted[idx++] = i;
-        }
-    }
-
-    // ===== HAND RANKING =====
-
-    if (straight && flush) {
-        if (highStraight == 14) {
-            hv.rank = Royal_Flush;
-        } else {
-            hv.rank = Straight_Flush;
-            hv.values[0] = highStraight;
-        }
-    }
-    else if (four) {
-        hv.rank = Four_Of_Kind;
-        hv.values[0] = four;
-
-        for (int i = 0; i < 5; i++) {
-            if (sorted[i] != four) {
-                hv.values[1] = sorted[i];
-                break;
-            }
-        }
-    }
-    else if (three && pairCount >= 1) {
-        hv.rank = Full_House;
-        hv.values[0] = three;
-        hv.values[1] = pairs[0];
-    }
-    else if (flush) {
-        hv.rank = Flush;
-        for (int i = 0; i < 5; i++) {
-            hv.values[i] = sorted[i];
-        }
-    }
-    else if (straight) {
-        hv.rank = Straight;
-        hv.values[0] = highStraight;
-    }
-    else if (three) {
-        hv.rank = Three_Of_Kind;
-        hv.values[0] = three;
-
-        int k = 1;
-        for (int i = 0; i < 5; i++) {
-            if (sorted[i] != three) {
-                hv.values[k++] = sorted[i];
-            }
-        }
-    }
-    else if (pairCount == 2) {
-        hv.rank = Two_Pair;
-
-        int highPair = pairs[0];
-        int lowPair = pairs[1];
-
-        hv.values[0] = highPair;
-        hv.values[1] = lowPair;
-
-        for (int i = 0; i < 5; i++) {
-            if (sorted[i] != highPair && sorted[i] != lowPair) {
-                hv.values[2] = sorted[i];
-                break;
-            }
-        }
-    }
-    else if (pairCount == 1) {
-        hv.rank = One_Pair;
-        hv.values[0] = pairs[0];
-
-        int k = 1;
-        for (int i = 0; i < 5; i++) {
-            if (sorted[i] != pairs[0]) {
-                hv.values[k++] = sorted[i];
-            }
-        }
-    }
-    else {
-        hv.rank = High_Card;
-        for (int i = 0; i < 5; i++) {
-            hv.values[i] = sorted[i];
-        }
-    }
-
-    return hv;
-}
-
-//Evaluates the best 5 card hand from the hand and board
-HandValue evaluateBestHand(Card cards[], int totalCards) {
-    HandValue best;
-    best.rank = High_Card;
-    memset(best.values, 0, sizeof(best.values));
-
-    for (int i = 0; i < totalCards - 4; i++) {
-        for (int j = i+1; j < totalCards - 3; j++) {
-            for (int k = j+1; k < totalCards - 2; k++) {
-                for (int l = k+1; l < totalCards - 1; l++) {
-                    for (int m = l+1; m < totalCards; m++) {
-
-                        Card hand[5] = {
-                            cards[i], cards[j],
-                            cards[k], cards[l], cards[m]
-                        };
-
-                        qsort(hand, 5, sizeof(Card), compareCards);
-
-                        HandValue current = evaluate5CardHand(hand);
-
-                        if (compareHandValue(current, best) > 0)
-                            best = current;
-                    }
-                }
-            }
-        }
-    }
-    return best;
-}
-
-//This function uses the Monte Carlo method to determine the bot's win rate with it current hand
-float evaluateHandStrength(Card hole[2], Card board[], int boardCount, int simulations) {
-    int wins = 0;
-    int ties = 0;
-    int losses = 0;
-
-    for (int sim = 0; sim < simulations; sim++) {
-
-        Card simDeck[52];
-        memcpy(simDeck, deck, sizeof(deck));
-
-        int simDeckLen = deckLength;
-
-        Card oppHole[2];
-
-        oppHole[0] = simDeck[rand() % simDeckLen];
-        oppHole[1] = simDeck[rand() % simDeckLen];
-
-        Card fullBoard[5];
-
-        for (int i = 0; i < boardCount; i++)
-            fullBoard[i] = board[i];
-
-        int index = 0;
-
-        while (boardCount + index < 5) {
-            fullBoard[boardCount + index] = simDeck[rand() % simDeckLen];
-            index++;
-        }
-
-        Card playerCards[7] = {
-            hole[0], hole[1],
-            fullBoard[0], fullBoard[1], fullBoard[2],
-            fullBoard[3], fullBoard[4]
-        };
-
-        Card oppCards[7] = {
-            oppHole[0], oppHole[1],
-            fullBoard[0], fullBoard[1], fullBoard[2],
-            fullBoard[3], fullBoard[4]
-        };
-
-        HandValue playerBest = evaluateBestHand(playerCards, 7);
-        HandValue oppBest = evaluateBestHand(oppCards, 7);
-
-        if (playerBest.rank > oppBest.rank) wins++;
-        else if (playerBest.rank < oppBest.rank) losses++;
-        else ties++;
-    }
-
-    return (wins + ties * 0.5) / simulations;
-}
-
-//Player's betting action, includes error handling
 int betAction() {
-
+    int first_timer = 0;
     printf ("What would you like to do? (1) Bet, (2) Fold, (3) Check\n");
     scanf ("%d", &action);
+
+    for (int i = 0; i < 1; i++) {
+        first_timer = rand() % 119 + 61;
+    }
 
     switch (action) {
         case 1:
@@ -340,7 +104,6 @@ int betAction() {
 
         case 2:
             printf ("You folded. Better luck next time!\n");
-            betSum = 0;
             return 1;
         case 3:
             printf ("You checked. Maybe the bot will bet? Let's find out!\n");
@@ -348,12 +111,10 @@ int betAction() {
         default:
             printf ("Invalid action. Please try again.\n");
     }
-
     random();
     return 0;
 }
 
-//Determines if the bot should raise, call or fold after a player raises a bot bet
 void reRaiseBot() {
 
     printf ("\033[1mThe bot is thinking...\n\033[0m\n");
@@ -380,12 +141,9 @@ void reRaiseBot() {
     }
 }
 
-//If the bot raises, this function determines what the player does
-int playerResponse() {
-
+void playerResponse() {
     printf("Would you like to call, fold, or raise? (1) Call, (2) Fold, (3) Raise\n");
     scanf("%d", &action);
-
     switch (action){
     case 1:
         printf("You call.\n");
@@ -395,7 +153,7 @@ int playerResponse() {
     case 2:
         printf("You fold.\n");
         betSum = 0;
-        return 1;
+        break;
     case 3:
         reRaisePlayer();
         break;
@@ -404,10 +162,8 @@ int playerResponse() {
         break;
     }
 
-    return 0;
 }
 
-//If the payer raises again, this determines how much
 void reRaisePlayer() {
     printf("You raise.\n");
     betSum += betAmount;
@@ -435,13 +191,11 @@ void reRaisePlayer() {
     reRaiseBot();
 }
 
-//Determines the bots action after the player acts
 void botAction() {
     float strong = 0.65;
     float weak = 0.35;
     printf ("\033[1mThe bot is thinking...\n\033[0m\n");
     randoBot(3);
-    sleep(randoAction);
     randoBot(10);
     if (action == 1 || action == 3) {
         switch (randoAction) {
@@ -479,7 +233,7 @@ void botAction() {
         if (botHandStrength >= strong) {
 
             if (action == 1) {
-                printf("The bot raises your bet!\n");
+                printf ("The bot raises by $%.2f. Your total bet is now $%.2f.\n", betAmount, betSum);
                 betAmount *= 1.5;
                 betSum += betAmount;
             }
@@ -495,7 +249,7 @@ void botAction() {
             
         }
 
-        else if (botHandStrength <= weak && betSum >= collegeFund * 0.15) {
+        else if (botHandStrength <= weak) {
 
             if (action == 1) {
                 printf("The bot folds.\n");
@@ -522,14 +276,12 @@ void botAction() {
     }
 }
 
-//Updates the bot's hand strength after each round of betting
 void updateBotHandStrength(int boardCount) {
     botHandStrength = evaluateHandStrength(botHand, table, boardCount, 1000);
 
     printf("DEBUG: %f\n", botHandStrength);
 }
 
-//Tells the user what their cards are and what the community cards are after each round of betting
 void printCards(int boardCount) {
     printf("\nYour Cards:\n");
 
@@ -548,11 +300,11 @@ void printCards(int boardCount) {
     printf("\n");
 }
 
-//Deals the hole cards to the player and bot and prints the player's hand
 void dealHoleCards() {
     playerHand[0] = drawCard();
-    botHand[0] = drawCard();
     playerHand[1] = drawCard();
+
+    botHand[0] = drawCard();
     botHand[1] = drawCard();
 
     printf("Your cards: %s of %s, %s of %s\n",
@@ -560,37 +312,31 @@ void dealHoleCards() {
         rankStrength[playerHand[1].rank], suitNames[playerHand[1].suit]);
 }
 
-//Prints the player's hole cards
 void printHoleCards(Card hand[2]) {
     printf("%s of %s, %s of %s",
         rankStrength[hand[0].rank], suitNames[hand[0].suit],
         rankStrength[hand[1].rank], suitNames[hand[1].suit]);
 }
 
-//Sets the first 3 community cards on the table
 void flop() {
     for (int i = 0; i < 3; i++) {
         table[i] = drawCard();
     }
 }
 
-//Sets the 4th community card on the table
 void turn() {
     table[3] = drawCard();
 }
 
-//Sets the 5th community card on the table
 void river() {
     table[4] = drawCard();
 }
 
-//Burns a card with a flame thrower
 void burnCard() {
     burnPile[burnIndex] = drawCard();
     burnIndex++;
 }
 
-//After all betting, compare hand strength and ruin dreams
 void showdown() {
 
     printf("\n===== SHOWDOWN =====\n");
@@ -638,7 +384,6 @@ void showdown() {
     printf("Your remaining college fund: $%.2f\n", collegeFund);
 }
 
-//Determines how much money a player brings in
 void startingFunds(){
     printf ("Welcome to the poker game!\n");
     printf ("How much of your son's college fund do you want to bring in?\n");
@@ -647,7 +392,6 @@ void startingFunds(){
     printf ("You have brought in $%.2f of your son's college fund.\n", collegeFund);
 }
 
-//Hey we need this to run.Bbasically main at this point
 void logicFlow() {
 
     initalizeDeck();
